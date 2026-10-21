@@ -1,27 +1,27 @@
-# Results Portal
+# Portal de Resultados
 
-Legal documentation for V-Lab's medical examination
-results access and delivery platform.
+Documentação jurídica da plataforma de acesso e entrega de
+resultados de exames médicos da V-Lab.
 
-## Audience
+## Público
 
-Healthcare organizations, clinics, hospitals,
-physicians, and authorized business customers.
+Organizações de saúde, clínicas, hospitais, médicos e clientes
+corporativos autorizados.
 
-## Legal Documents
+## Documentos Jurídicos
 
-This directory contains the legal documents applicable
-to the Results Portal.
+Este diretório contém os documentos jurídicos aplicáveis ao
+Portal de Resultados.
 
-Potential documents include:
+Documentos possíveis:
 
-- Terms of Service
-- Privacy Policy
-- Data Processing Agreement
+- Termos de Uso
+- Política de Privacidade
+- Acordo de Tratamento de Dados
 
-## Version History
+## Histórico de Versões
 
-Previous legal document versions must be preserved
-in the `archive/` directory.
+Versões anteriores dos documentos jurídicos devem ser preservadas
+no diretório `archive/`.
 
-Each document must identify its version and effective date.
+Cada documento deve identificar sua versão e data de vigência.

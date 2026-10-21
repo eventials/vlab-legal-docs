@@ -1,44 +1,44 @@
 # Business-to-Consumer (B2C)
 
-Legal documentation applicable to V-Lab's consumer-facing
-products and services.
+Documentação jurídica aplicável aos produtos e serviços da V-Lab
+voltados ao consumidor final.
 
-These documents govern the relationship between V-Lab
-and individual users, including patients and other consumers.
+Esses documentos regem a relação entre a V-Lab e os usuários
+individuais, incluindo pacientes e demais consumidores.
 
-## Products
+## Produtos
 
-| Product | Description |
-|---------|-------------|
-| [V-Baby App](vbaby-app/) | Patient-facing application providing access to examination recordings and pregnancy-related services. |
-| [Baby Shower](baby-shower/) | Consumer-facing baby shower service. |
+| Produto | Descrição |
+|---------|-----------|
+| [Aplicativo V-Baby](vbaby-app/) | Aplicativo voltado ao paciente, com acesso a gravações de exames e serviços relacionados à gestação. |
+| [Baby Shower](baby-shower/) | Serviço de baby shower voltado ao consumidor final. |
 
-## Document Scope
+## Escopo dos Documentos
 
-Depending on the product, legal documents may include:
+Conforme o produto, os documentos jurídicos podem incluir:
 
-- Terms of Service
-- Privacy Policies
-- Consent Notices
-- Other applicable legal notices
+- Termos de Uso
+- Políticas de Privacidade
+- Termos de Consentimento
+- Outros avisos jurídicos aplicáveis
 
-## Document Organization
+## Organização dos Documentos
 
-Each product maintains its applicable legal documents.
+Cada produto mantém os documentos jurídicos que lhe são aplicáveis.
 
-Current and historical versions must be clearly identified.
+As versões vigentes e históricas devem ser claramente identificadas.
 
-Previously published versions must remain available
-for historical reference and auditing.
+As versões publicadas anteriormente devem permanecer disponíveis
+para referência histórica e auditoria.
 
-## Versioning and Acceptance
+## Versionamento e Aceite
 
-Document versions must be independently traceable.
+As versões dos documentos devem ser rastreáveis de forma independente.
 
-When user acceptance is required, the application should
-record the exact document version accepted by the user.
+Quando o aceite do usuário for exigido, a aplicação deve registrar
+a versão exata do documento aceita pelo usuário.
 
-## Language
+## Idioma
 
-Legal documents intended for Brazilian consumers
-are maintained in Brazilian Portuguese unless otherwise required.
+Os documentos jurídicos destinados a consumidores brasileiros são
+mantidos em português do Brasil, salvo quando exigido de outra forma.

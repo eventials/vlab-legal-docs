@@ -1,30 +1,28 @@
 # Baby Shower
 
-Legal documentation for V-Lab's Baby Shower service.
+Documentação jurídica do serviço Baby Shower da V-Lab.
 
-## Audience
+## Público
 
-Individual consumers and users of the Baby Shower service.
+Consumidores individuais e usuários do serviço Baby Shower.
 
-## Legal Documents
+## Documentos Jurídicos
 
-This directory contains the applicable legal documents,
-including:
+Este diretório contém os documentos jurídicos aplicáveis,
+incluindo:
 
-- Terms of Service
-- Privacy Policy
-- Other applicable notices
+- Termos de Uso
+- Política de Privacidade
+- Outros avisos aplicáveis
 
-## Versioning
+## Versionamento
 
-Each document must have an identifiable version
-and effective date.
+Cada documento deve ter versão e data de vigência identificáveis.
 
-Superseded documents must be preserved in the
-`archive/` directory.
+Documentos substituídos devem ser preservados no diretório
+`archive/`.
 
-## User Acceptance
+## Aceite do Usuário
 
-When acceptance is required, the service should
-retain evidence of the document version accepted
-by the user.
+Quando o aceite for exigido, o serviço deve reter evidência da
+versão do documento aceita pelo usuário.

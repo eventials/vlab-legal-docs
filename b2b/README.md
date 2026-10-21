@@ -1,40 +1,40 @@
 # Business-to-Business (B2B)
 
-Legal documentation applicable to V-Lab's business customers,
-including healthcare organizations, clinics, hospitals,
-physicians, and other professional service providers.
+Documentação jurídica aplicável aos clientes corporativos da V-Lab,
+incluindo organizações de saúde, clínicas, hospitais, médicos e
+demais prestadores de serviços profissionais.
 
-## Products
+## Produtos
 
-| Product | Description |
-|---------|-------------|
-| [Recording Platform](recording-platform/) | Platform for recording and distributing medical examination videos. |
-| [Results Portal](results-portal/) | Platform for accessing and delivering medical examination results. |
+| Produto | Descrição |
+|---------|-----------|
+| [Plataforma de Gravação](recording-platform/) | Plataforma para gravação e distribuição de vídeos de exames médicos. |
+| [Portal de Resultados](results-portal/) | Plataforma para acesso e entrega de resultados de exames médicos. |
 
-## Document Scope
+## Escopo dos Documentos
 
-Depending on the product and contractual relationship,
-documents may include:
+Conforme o produto e a relação contratual, os documentos podem incluir:
 
-- Terms of Service
-- Privacy Policies
-- Data Processing Agreements
-- Service Level Agreements
-- Other contractual or regulatory documents
+- Termos de Uso
+- Políticas de Privacidade
+- Acordos de Tratamento de Dados
+- Acordos de Nível de Serviço
+- Outros documentos contratuais ou regulatórios
 
-## Document Organization
+## Organização dos Documentos
 
-Each product maintains its own documentation directory.
+Cada produto mantém seu próprio diretório de documentação.
 
-Shared documents applicable to multiple products may be
-maintained separately to avoid duplication.
+Documentos compartilhados, aplicáveis a mais de um produto, podem
+ser mantidos separadamente para evitar duplicação.
 
-Historical versions must be preserved when documents
-are superseded.
+Versões históricas devem ser preservadas quando os documentos
+forem substituídos.
 
-## Governance
+## Governança
 
-Legal documents must be reviewed and approved before
-becoming effective.
+Os documentos jurídicos devem ser revisados e aprovados antes de
+entrarem em vigor.
 
-Any changes must maintain traceability of previous versions.
+Qualquer alteração deve preservar a rastreabilidade das versões
+anteriores.

@@ -1,35 +1,33 @@
-# V-Baby App
+# Aplicativo V-Baby
 
-Legal documentation for the V-Baby mobile application.
+Documentação jurídica do aplicativo móvel V-Baby.
 
-## Audience
+## Público
 
-Patients and individual users of the V-Baby application.
+Pacientes e usuários individuais do aplicativo V-Baby.
 
-## Product Scope
+## Escopo do Produto
 
-V-Baby provides access to medical examination recordings
-and pregnancy-related services.
+O V-Baby oferece acesso a gravações de exames médicos e a serviços
+relacionados à gestação.
 
-## Legal Documents
+## Documentos Jurídicos
 
-This directory contains the applicable legal documents,
-including:
+Este diretório contém os documentos jurídicos aplicáveis,
+incluindo:
 
-- Terms of Service
-- Privacy Policy
-- Consent Notices, when applicable
+- Termos de Uso
+- Política de Privacidade
+- Termos de Consentimento, quando aplicável
 
-## Versioning
+## Versionamento
 
-Each document must have an identifiable version
-and effective date.
+Cada documento deve ter versão e data de vigência identificáveis.
 
-Superseded documents must be preserved in the
-`archive/` directory.
+Documentos substituídos devem ser preservados no diretório
+`archive/`.
 
-## User Acceptance
+## Aceite do Usuário
 
-When acceptance is required, the application should
-retain evidence of the document version accepted
-by the user.
+Quando o aceite for exigido, o aplicativo deve reter evidência da
+versão do documento aceita pelo usuário.

@@ -1,72 +1,75 @@
-# V-Lab Legal Documents
+# Documentos Jurídicos V-Lab
 
-Official repository for managing and versioning the legal documents
-of V-Lab products and services.
+Repositório oficial para gestão e versionamento dos documentos
+jurídicos dos produtos e serviços da V-Lab.
 
-## Purpose
+## Finalidade
 
-This repository provides a centralized, traceable, and version-controlled
-source of legal documentation, including:
+Este repositório oferece uma fonte centralizada, rastreável e
+versionada da documentação jurídica, incluindo:
 
-- Terms of Service
-- Privacy Policies
-- Data Processing Agreements
-- Service Level Agreements
-- Other applicable legal documents
+- Termos de Uso
+- Políticas de Privacidade
+- Acordos de Tratamento de Dados
+- Acordos de Nível de Serviço
+- Outros documentos jurídicos aplicáveis
 
-## Structure
+## Estrutura
 
-Legal documents are organized by audience and product.
+Os documentos jurídicos são organizados por público e produto.
 
 ### Business-to-Business (B2B)
 
-Legal documentation for healthcare organizations, clinics,
-hospitals, physicians, and other business customers.
+Documentação jurídica para organizações de saúde, clínicas,
+hospitais, médicos e demais clientes corporativos.
 
-- [Recording Platform](b2b/recording-platform/)
-- [Results Portal](b2b/results-portal/)
+- [Plataforma de Gravação](b2b/recording-platform/)
+- [Portal de Resultados](b2b/results-portal/)
 
 ### Business-to-Consumer (B2C)
 
-Legal documentation for patients and individual users.
+Documentação jurídica para pacientes e usuários individuais.
 
-- [V-Baby App](b2c/vbaby-app/)
+- [Aplicativo V-Baby](b2c/vbaby-app/)
 - [Baby Shower](b2c/baby-shower/)
 
-## Document Management
+## Gestão de Documentos
 
-Each product maintains its applicable legal documentation.
+Cada produto mantém a documentação jurídica que lhe é aplicável.
 
-Documents must include:
+Os documentos devem conter:
 
-- Document title
-- Version identifier
-- Effective date
-- Publication date, when available
-- Document status
+- Título do documento
+- Identificador de versão
+- Data de vigência
+- Data de publicação, quando disponível
+- Status do documento
 
-Superseded documents must be preserved for historical
-reference and auditability.
+Documentos substituídos devem ser preservados para fins de
+referência histórica e auditabilidade.
 
-## Versioning
+## Versionamento
 
-Each legal document is versioned independently.
+Cada documento jurídico é versionado de forma independente.
 
-Git history provides traceability of changes, while document
-versions identify the terms applicable during a specific period.
+O histórico do Git fornece a rastreabilidade das alterações,
+enquanto as versões do documento identificam os termos aplicáveis
+em um determinado período.
 
-## Governance
+## Governança
 
-Changes to legal documents must be reviewed and approved
-by authorized stakeholders before publication.
+Alterações em documentos jurídicos devem ser revisadas e aprovadas
+pelas partes interessadas autorizadas antes da publicação.
 
-The repository is the source of truth for approved legal
-document content.
+O repositório é a fonte da verdade para o conteúdo jurídico aprovado.
 
-## Language
+## Idioma
 
-Repository structure, filenames, and technical documentation
-are maintained in English.
+A estrutura do repositório e os nomes de arquivos e diretórios são
+mantidos em inglês.
 
-Legal documents may be written in Portuguese or other
-languages according to their intended audience.
+A documentação técnica (arquivos README) é mantida em português
+do Brasil.
+
+Os documentos jurídicos podem ser redigidos em português ou em
+outros idiomas, conforme o público a que se destinam.
