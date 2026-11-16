@@ -16,7 +16,7 @@ export function formatDate(iso) {
   return `${Number(m[3])} de ${MONTHS[Number(m[2]) - 1]} de ${m[1]}`;
 }
 
-export function layout({ base, siteUrl, assets, title, description, crumbs, main }) {
+export function layout({ base, siteUrl, preview = false, assets, title, description, crumbs, main }) {
   const breadcrumb = crumbs.length
     ? `<nav class="breadcrumb" aria-label="Navegação estrutural"><ol>${crumbs
         .map((c, i) =>
@@ -34,11 +34,13 @@ export function layout({ base, siteUrl, assets, title, description, crumbs, main
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escapeHtml(title)} · V-Lab</title>
 ${description ? `<meta name="description" content="${escapeHtml(description)}">` : ''}
+${preview ? '<meta name="robots" content="noindex, nofollow">' : ''}
 <link rel="stylesheet" href="${assets['style.css']}">
 <script src="${assets['site.js']}" defer></script>
 </head>
 <body>
 <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+${preview ? '<div class="preview-bar">Prévia para revisão — não é a versão publicada</div>' : ''}
 <header class="site-header">
   <div class="container">
     <a class="brand" href="${base}/">V-Lab <span>Documentos jurídicos</span></a>

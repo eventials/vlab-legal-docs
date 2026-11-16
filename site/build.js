@@ -18,6 +18,8 @@
 //   BASE_PATH  prefixo público do site (padrão "legal" -> /legal/...)
 //   SITE_URL   link "voltar ao site" no cabeçalho (padrão "/")
 //   SRC_DIR    raiz dos documentos (padrão: raiz do repositório)
+//   DIFF_BASE  ref do git a comparar (ex.: origin/master). Quando definido, gera uma
+//              prévia de revisão com as alterações destacadas (usado nos PRs).
 
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, statSync, rmSync, existsSync } from 'node:fs';
 import { join, resolve, dirname, basename, relative } from 'node:path';
@@ -26,6 +28,7 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { Marked } from 'marked';
 import { layout, escapeHtml, formatDate } from './template.js';
+import { diffTokens, applyMarkers, cleanMarkers } from './diff.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = resolve(process.env.SRC_DIR || ROOT);
@@ -34,6 +37,8 @@ const BASE_SEG = (process.env.BASE_PATH ?? 'legal').replace(/^\/+|\/+$/g, '');
 const BASE = BASE_SEG ? `/${BASE_SEG}` : '';
 const OUT = join(DIST, BASE_SEG);
 const SITE_URL = process.env.SITE_URL || '/';
+const DIFF_BASE = process.env.DIFF_BASE || '';
+const PREVIEW = Boolean(DIFF_BASE);
 
 const IGNORED_DIRS = new Set(['node_modules', 'dist', 'site', 'worker', 'archive']);
 
@@ -102,9 +107,29 @@ function readmeInfo(dir, fallback) {
   return { title: h1?.text ?? fallback, description: p ? p.text.replace(/\s+/g, ' ') : '' };
 }
 
+/** Conteúdo do arquivo em DIFF_BASE, ou null se ele não existia lá. */
+function gitShow(file) {
+  try {
+    const rel = relative(SRC, file).split('\\').join('/');
+    return execFileSync('git', ['show', `${DIFF_BASE}:${rel}`], {
+      cwd: SRC,
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).toString();
+  } catch {
+    return null;
+  }
+}
+
 // ---------- renderização de markdown ----------
 
-function renderMarkdown(src) {
+/** Separa o primeiro H1 (vira o título da página e não se repete no corpo). */
+function takeTitle(tokens) {
+  const i = tokens.findIndex((t) => t.type !== 'space');
+  if (i >= 0 && tokens[i].type === 'heading' && tokens[i].depth === 1) return tokens.splice(i, 1)[0].text;
+  return null;
+}
+
+function renderMarkdown(src, baseSrc = null) {
   const { data, body } = parseFrontmatter(src);
   const toc = [];
   const used = new Map();
@@ -114,37 +139,55 @@ function renderMarkdown(src) {
     renderer: {
       heading({ tokens, depth }) {
         const inner = this.parser.parseInline(tokens);
-        const base = slugify(stripTags(inner));
+        const plain = cleanMarkers(stripTags(inner));
+        const base = slugify(plain);
         const n = used.get(base) ?? 0;
         used.set(base, n + 1);
         const id = n ? `${base}-${n}` : base;
-        if (depth === 2) toc.push({ id, text: stripTags(inner) });
+        if (depth === 2) toc.push({ id, text: plain });
         return `<h${depth} id="${id}"><a class="anchor" href="#${id}" aria-hidden="true" tabindex="-1">#</a>${inner}</h${depth}>\n`;
       },
     },
   });
 
-  // O primeiro H1 vira o título da página (não é repetido no corpo).
-  const tokens = marked.lexer(body);
-  let title = data.title;
-  const firstIdx = tokens.findIndex((t) => t.type !== 'space');
-  if (firstIdx >= 0 && tokens[firstIdx].type === 'heading' && tokens[firstIdx].depth === 1) {
-    title ??= stripTags(marked.parseInline(tokens[firstIdx].text));
-    tokens.splice(firstIdx, 1);
+  let tokens = marked.lexer(body);
+  const h1 = takeTitle(tokens);
+  const title = data.title ?? (h1 ? stripTags(marked.parseInline(h1)) : null);
+
+  let diff = null;
+  if (baseSrc !== null) {
+    const base = parseFrontmatter(baseSrc);
+    const baseTokens = marked.lexer(base.body);
+    takeTitle(baseTokens);
+    const plain = new Marked({ gfm: true });
+    const result = diffTokens(baseTokens, tokens, (md) => marked.lexer(md), (md) => plain.parse(md));
+    tokens = result.tokens;
+    diff = { changes: result.changes, oldData: base.data };
   }
+
   // envolve tabelas para permitir rolagem horizontal no celular
-  const html = marked
+  let html = marked
     .parser(tokens)
     .replace(/<table>/g, '<div class="table-wrap"><table>')
     .replace(/<\/table>/g, '</table></div>');
-  return { data, title, html, toc };
+  if (diff) html = applyMarkers(html);
+  return { data, title, html, toc, diff };
 }
 
 // ---------- coleta ----------
 
-function loadDoc(file, urlPath) {
-  const { data, title, html, toc } = renderMarkdown(readFileSync(file, 'utf8'));
+function loadDoc(file, urlPath, { compare = false } = {}) {
+  const baseSrc = compare && PREVIEW ? gitShow(file) : null;
+  const { data, title, html, toc, diff } = renderMarkdown(readFileSync(file, 'utf8'), baseSrc);
+  let review = null;
+  if (compare && PREVIEW) {
+    review = baseSrc === null ? { status: 'new' } : { status: diff.changes ? 'changed' : 'unchanged', ...diff };
+    if (review.status === 'unchanged' && (diff.oldData.version !== data.version || diff.oldData.effective_date !== data.effective_date)) {
+      review.status = 'changed';
+    }
+  }
   return {
+    review,
     file,
     url: urlPath,
     slug: basename(file, '.md'),
@@ -168,7 +211,7 @@ function collect() {
       const product = { slug: p, url: `${BASE}/${g}/${p}/`, ...readmeInfo(pDir, p), docs: [] };
       for (const f of mdFiles(pDir)) {
         const slug = basename(f, '.md');
-        const doc = loadDoc(join(pDir, f), `${product.url}${slug}/`);
+        const doc = loadDoc(join(pDir, f), `${product.url}${slug}/`, { compare: true });
         if (doc.draft) continue;
         const archDir = join(pDir, 'archive', slug);
         doc.archive = isDir(archDir)
@@ -199,11 +242,39 @@ function metaLine(doc) {
 function docList(docs) {
   return `<ul class="doc-list">${docs
     .map(
-      (d) => `<li><a href="${d.url}">${escapeHtml(d.title)}</a>${
+      (d) => `<li><span><a href="${d.url}">${escapeHtml(d.title)}</a>${reviewBadge(d)}</span>${
         metaLine(d) ? `<span class="meta">${metaLine(d)}</span>` : ''
       }</li>`
     )
     .join('')}</ul>`;
+}
+
+function reviewBadge(doc) {
+  if (doc.review?.status === 'new') return ' <span class="badge badge-new">novo</span>';
+  if (doc.review?.status === 'changed') return ' <span class="badge badge-changed">alterado</span>';
+  return '';
+}
+
+function reviewPanel(doc) {
+  const r = doc.review;
+  if (!r) return '';
+  if (r.status === 'new') return '<div class="review" role="note"><strong>Documento novo.</strong> Ainda não existe na versão publicada.</div>';
+  if (r.status === 'unchanged') return '<div class="review review-none" role="note">Sem alterações em relação à versão publicada.</div>';
+
+  const meta = [];
+  const from = r.oldData;
+  if ((from.version || '') !== (doc.version || '')) meta.push(`Versão: ${escapeHtml(from.version || '—')} → ${escapeHtml(doc.version || '—')}`);
+  if ((from.effective_date || '') !== (doc.effectiveDate || ''))
+    meta.push(`Vigência: ${from.effective_date ? formatDate(from.effective_date) : '—'} → ${doc.effectiveDate ? formatDate(doc.effectiveDate) : '—'}`);
+  const links = Array.from({ length: r.changes }, (_, i) => `<a href="#alteracao-${i + 1}">${i + 1}</a>`).join(' ');
+  return `<div class="review" role="note">
+    <p><strong>${r.changes} ${r.changes === 1 ? 'alteração' : 'alterações'}</strong> em relação à versão publicada${
+      r.changes ? `: <span class="review-links">${links}</span>` : '.'
+    }</p>
+    ${meta.length ? `<p>${meta.join('<br>')}</p>` : ''}
+    <p class="review-legend"><ins>texto adicionado</ins> <del>texto removido</del>
+    <button type="button" class="review-toggle" data-toggle-diff>Ocultar alterações</button></p>
+  </div>`;
 }
 
 function tocHtml(toc) {
@@ -232,6 +303,7 @@ function docPage(doc, group, product, current = null) {
   return layout({
     base: BASE,
     siteUrl: SITE_URL,
+    preview: PREVIEW,
     assets: ASSETS,
     title: doc.title,
     description: `${doc.title} — ${product.title}`,
@@ -241,6 +313,7 @@ function docPage(doc, group, product, current = null) {
         <h1>${escapeHtml(doc.title)}</h1>
         ${metaLine(doc) ? `<p class="meta">${metaLine(doc)}</p>` : ''}
         ${banner}
+        ${current ? '' : reviewPanel(doc)}
       </header>
       ${tocHtml(doc.toc)}
       <div class="prose">${doc.html}${history}</div>
@@ -253,6 +326,7 @@ function productPage(group, product) {
   return layout({
     base: BASE,
     siteUrl: SITE_URL,
+    preview: PREVIEW,
     assets: ASSETS,
     title: product.title,
     description: product.description,
@@ -278,6 +352,7 @@ function groupPage(group) {
   return layout({
     base: BASE,
     siteUrl: SITE_URL,
+    preview: PREVIEW,
     assets: ASSETS,
     title: group.title,
     description: group.description,
@@ -302,6 +377,7 @@ function indexPage(groups) {
   return layout({
     base: BASE,
     siteUrl: SITE_URL,
+    preview: PREVIEW,
     assets: ASSETS,
     title: 'Documentos jurídicos',
     description: 'Termos de uso, políticas de privacidade e demais documentos jurídicos da V-Lab.',
@@ -314,6 +390,7 @@ function notFoundPage() {
   return layout({
     base: BASE,
     siteUrl: SITE_URL,
+    preview: PREVIEW,
     assets: ASSETS,
     title: 'Página não encontrada',
     description: '',
@@ -371,4 +448,4 @@ writeFileSync(
   `${BASE}/assets/*\n  Cache-Control: public, max-age=31536000, immutable\n/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n`
 );
 
-console.log(`✓ ${count} documento(s) publicado(s) em dist${BASE}/`);
+console.log(`✓ ${count} documento(s) publicado(s) em dist${BASE}/${PREVIEW ? ` (prévia comparando com ${DIFF_BASE})` : ''}`);

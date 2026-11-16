@@ -29,6 +29,9 @@ jobs:
 
       - run: npm ci
       - run: npm run build
+        env:
+          # Em PRs, gera a prévia com as alterações destacadas em relação à branch base.
+          DIFF_BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || '' }}
 
       # master -> produção
       - name: Deploy (produção)

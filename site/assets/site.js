@@ -22,3 +22,13 @@
     if (el) observer.observe(el);
   }
 })();
+
+// Prévia de revisão: alterna entre ver as alterações e o texto final limpo.
+document.querySelectorAll('[data-toggle-diff]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const hidden = document.body.classList.toggle('hide-diff');
+    document.querySelectorAll('[data-toggle-diff]').forEach((b) => {
+      b.textContent = hidden ? 'Mostrar alterações' : 'Ocultar alterações';
+    });
+  });
+});

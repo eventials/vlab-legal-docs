@@ -98,6 +98,12 @@ Pull requests geram uma URL de preview para revisão antes do merge.
 
 5. Abrir um pull request, revisar o preview e, após aprovação, fazer o merge.
 
+O link de preview é comentado automaticamente no pull request. Nele, as
+alterações em relação à versão publicada aparecem destacadas (texto
+adicionado em verde, removido em vermelho), com navegação entre as
+alterações e um botão para ver o texto final sem marcações. Para gerar
+essa prévia localmente: `DIFF_BASE=origin/master npm run serve`.
+
 Observações:
 
 - O nome do arquivo define a URL e não deve mudar depois de publicado.
