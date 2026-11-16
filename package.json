@@ -1,0 +1,15 @@
+{
+  "name": "vlab-legal-docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node site/build.js",
+    "serve": "node site/build.js && npx --yes serve dist -l 4000"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "marked": "^15.0.12"
+  }
+}

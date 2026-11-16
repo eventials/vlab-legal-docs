@@ -1,0 +1,57 @@
+name: Publicar documentos
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # histórico completo: a data de "Atualizado em" vem do git log
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      # master -> produção
+      - name: Deploy (produção)
+        if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+
+      # PR -> URL de preview para revisão do jurídico, sem afetar produção
+      - name: Preview (PR)
+        id: preview
+        if: github.event_name == 'pull_request'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: versions upload --preview-alias pr-${{ github.event.number }}
+
+      - name: Resumo
+        if: github.event_name == 'pull_request'
+        env:
+          OUTPUT: ${{ steps.preview.outputs.command-output }}
+        run: |
+          echo "### Preview dos documentos" >> "$GITHUB_STEP_SUMMARY"
+          echo "$OUTPUT" | grep -o 'https://[^ ]*workers.dev' | sed 's|$|/legal/|' >> "$GITHUB_STEP_SUMMARY" || true
