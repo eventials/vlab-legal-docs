@@ -12,6 +12,7 @@ concurrency:
 
 permissions:
   contents: read
+  pull-requests: write # comentário com o link de preview
 
 jobs:
   publish:
@@ -48,10 +49,21 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: versions upload --preview-alias pr-${{ github.event.number }}
 
-      - name: Resumo
+      # Mantém um único comentário no PR com o link (atualizado a cada push).
+      - name: Comentar link de preview no PR
         if: github.event_name == 'pull_request'
         env:
+          GH_TOKEN: ${{ github.token }}
           OUTPUT: ${{ steps.preview.outputs.command-output }}
+          PR: ${{ github.event.number }}
+          SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          echo "### Preview dos documentos" >> "$GITHUB_STEP_SUMMARY"
-          echo "$OUTPUT" | grep -o 'https://[^ ]*workers.dev' | sed 's|$|/legal/|' >> "$GITHUB_STEP_SUMMARY" || true
+          URL=$(echo "$OUTPUT" | grep -oP 'Preview Alias URL: \Khttps://\S+' | head -1)
+          [ -n "$URL" ] || { echo "URL de preview não encontrada"; exit 1; }
+          BODY="### 📄 Preview dos documentos
+
+          **${URL}/legal/**
+
+          É assim que o site ficará após o merge. Atualizado no commit \`${SHA::7}\`."
+          echo "$BODY" >> "$GITHUB_STEP_SUMMARY"
+          gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --edit-last --create-if-none --body "$BODY"
