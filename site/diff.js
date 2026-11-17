@@ -41,12 +41,14 @@ function wrap(text, open, close, atLineStart) {
     .join('\n');
 }
 
-/** Destinos resolvidos (já com links de referência) de todos os links/imagens de um token. */
+/** Destinos resolvidos (já com links de referência) dos links e destino+alt das imagens de um token. */
 function hrefs(token) {
   const out = [];
   const walk = (t) => {
     if (!t || typeof t !== 'object') return;
-    if ((t.type === 'link' || t.type === 'image') && t.href) out.push(t.href);
+    if (t.type === 'link' && t.href) out.push(t.href);
+    // alt da imagem vira atributo: marcas dentro dele seriam descartadas, então entra na comparação
+    if (t.type === 'image') out.push(`${t.href}\u0001${t.text}`);
     for (const k of ['tokens', 'items', 'header', 'rows']) {
       const v = t[k];
       if (Array.isArray(v)) v.flat().forEach(walk);
