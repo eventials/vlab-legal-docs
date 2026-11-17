@@ -73,3 +73,64 @@ do Brasil.
 
 Os documentos jurídicos podem ser redigidos em português ou em
 outros idiomas, conforme o público a que se destinam.
+
+## Publicação
+
+Todo merge na `master` publica automaticamente os documentos em
+`/legal` do site institucional (GitHub Actions → Cloudflare Workers).
+Pull requests geram uma URL de preview para revisão antes do merge.
+
+### Como publicar ou atualizar um documento
+
+1. No Google Docs, resolver todas as sugestões e comentários pendentes.
+2. Exportar em **Arquivo → Fazer download → Markdown (.md)**.
+3. Se já existir uma versão vigente, movê-la para
+   `<produto>/archive/<documento>/<data-de-vigência>.md`.
+4. Salvar o novo arquivo como `<produto>/<documento>.md`
+   (ex.: `b2c/vbaby-app/privacy-policy.md`) e adicionar o cabeçalho:
+
+   ```markdown
+   ---
+   version: 2.0
+   effective_date: 2026-11-16
+   ---
+   ```
+
+5. Abrir um pull request, revisar o preview e, após aprovação, fazer o merge.
+
+O link de preview é comentado automaticamente no pull request. Nele, as
+alterações em relação à versão publicada aparecem destacadas (texto
+adicionado em verde, removido em vermelho), com navegação entre as
+alterações e um botão para ver o texto final sem marcações. Para gerar
+essa prévia localmente, atualize antes a referência da `master`:
+
+```bash
+git fetch origin
+DIFF_BASE=origin/master npm run serve
+```
+
+PRs abertos a partir de forks não geram preview (não têm acesso às
+credenciais da Cloudflare).
+
+Observações:
+
+- O nome do arquivo define a URL e não deve mudar depois de publicado.
+- O primeiro título (`# ...`) do documento vira o título da página; os
+  títulos de nível 2 (`## ...`) formam o sumário lateral.
+- `status: draft` no cabeçalho impede a publicação do arquivo.
+- Arquivos `README.md` não são publicados.
+
+### Desenvolvimento local
+
+```bash
+npm install
+npm run serve   # http://localhost:4000/legal/
+```
+
+### Infraestrutura
+
+- `site/`: gerador do site (Node + `marked`), template, CSS e JS.
+- `wrangler.toml`: Cloudflare Worker com static assets que serve o
+  conteúdo de `dist/` e responde em `/legal/*` do domínio institucional.
+- `.github/workflows/publish.yml`: build e deploy do Worker
+  (secrets `CLOUDFLARE_API_TOKEN` e `CLOUDFLARE_ACCOUNT_ID`).
