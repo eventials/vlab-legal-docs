@@ -55,14 +55,16 @@ const mdFiles = (p) =>
     .sort();
 
 function parseFrontmatter(src) {
-  const m = src.match(/^﻿?---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
+  const m = src.match(/^\uFEFF?---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
   if (!m) return { data: {}, body: src };
   const data = {};
   for (const line of m[1].split(/\r?\n/)) {
     const i = line.indexOf(':');
     if (i < 0) continue;
     const key = line.slice(0, i).trim();
-    const val = line.slice(i + 1).trim().replace(/^(["'])(.*)\1$/, '$2');
+    const raw = line.slice(i + 1).trim();
+    const quoted = raw.match(/^(["'])(.*?)\1(?:\s+#.*)?$/);
+    const val = quoted ? quoted[2] : raw.replace(/\s+#.*$/, '').trim(); // ignora "# comentário"
     if (key) data[key] = val;
   }
   return { data, body: src.slice(m[0].length) };
@@ -132,7 +134,7 @@ function takeTitle(tokens) {
 function renderMarkdown(src, baseSrc = null) {
   const { data, body } = parseFrontmatter(src);
   const toc = [];
-  const used = new Map();
+  const usedIds = new Set();
 
   const marked = new Marked({
     gfm: true,
@@ -141,9 +143,9 @@ function renderMarkdown(src, baseSrc = null) {
         const inner = this.parser.parseInline(tokens);
         const plain = cleanMarkers(stripTags(inner));
         const base = slugify(plain);
-        const n = used.get(base) ?? 0;
-        used.set(base, n + 1);
-        const id = n ? `${base}-${n}` : base;
+        let id = base;
+        for (let n = 1; usedIds.has(id); n++) id = `${base}-${n}`;
+        usedIds.add(id);
         if (depth === 2) toc.push({ id, text: plain });
         return `<h${depth} id="${id}"><a class="anchor" href="#${id}" aria-hidden="true" tabindex="-1">#</a>${inner}</h${depth}>\n`;
       },
@@ -158,11 +160,24 @@ function renderMarkdown(src, baseSrc = null) {
   if (baseSrc !== null) {
     const base = parseFrontmatter(baseSrc);
     const baseTokens = marked.lexer(base.body);
-    takeTitle(baseTokens);
+    const baseH1 = takeTitle(baseTokens);
+    const oldTitle = base.data.title ?? (baseH1 ? stripTags(marked.parseInline(baseH1)) : null);
     const plain = new Marked({ gfm: true });
-    const result = diffTokens(baseTokens, tokens, (md) => marked.lexer(md), (md) => plain.parse(md));
+    // Blocos reprocessados isoladamente precisam das definições de links de referência ([x]: url).
+    const defs = (links) =>
+      Object.entries(links || {})
+        .map(([k, v]) => `\n\n[${k}]: <${v.href}>${v.title ? ` "${v.title}"` : ''}`)
+        .join('');
+    const newDefs = defs(tokens.links);
+    const oldDefs = defs(baseTokens.links);
+    const result = diffTokens(
+      baseTokens,
+      tokens,
+      (md) => marked.lexer(md + newDefs),
+      (md) => plain.parse(md + oldDefs)
+    );
     tokens = result.tokens;
-    diff = { changes: result.changes, oldData: base.data };
+    diff = { changes: result.changes, oldData: base.data, oldTitle };
   }
 
   // envolve tabelas para permitir rolagem horizontal no celular
@@ -182,7 +197,12 @@ function loadDoc(file, urlPath, { compare = false } = {}) {
   let review = null;
   if (compare && PREVIEW) {
     review = baseSrc === null ? { status: 'new' } : { status: diff.changes ? 'changed' : 'unchanged', ...diff };
-    if (review.status === 'unchanged' && (diff.oldData.version !== data.version || diff.oldData.effective_date !== data.effective_date)) {
+    const metaChanged =
+      diff &&
+      ((diff.oldData.version || '') !== (data.version || '') ||
+        (diff.oldData.effective_date || '') !== (data.effective_date || '') ||
+        (diff.oldTitle || '') !== (title || ''));
+    if (review.status === 'unchanged' && metaChanged) {
       review.status = 'changed';
     }
   }
@@ -263,16 +283,19 @@ function reviewPanel(doc) {
 
   const meta = [];
   const from = r.oldData;
+  if ((r.oldTitle || '') !== (doc.title || '')) meta.push(`Título: ${escapeHtml(r.oldTitle || '—')} → ${escapeHtml(doc.title)}`);
   if ((from.version || '') !== (doc.version || '')) meta.push(`Versão: ${escapeHtml(from.version || '—')} → ${escapeHtml(doc.version || '—')}`);
   if ((from.effective_date || '') !== (doc.effectiveDate || ''))
     meta.push(`Vigência: ${from.effective_date ? formatDate(from.effective_date) : '—'} → ${doc.effectiveDate ? formatDate(doc.effectiveDate) : '—'}`);
   const links = Array.from({ length: r.changes }, (_, i) => `<a href="#alteracao-${i + 1}">${i + 1}</a>`).join(' ');
   return `<div class="review" role="note">
-    <p><strong>${r.changes} ${r.changes === 1 ? 'alteração' : 'alterações'}</strong> em relação à versão publicada${
-      r.changes ? `: <span class="review-links">${links}</span>` : '.'
+    <p>${
+      r.changes
+        ? `<strong>${r.changes} ${r.changes === 1 ? 'alteração' : 'alterações'}</strong> em relação à versão publicada: <span class="review-links">${links}</span>`
+        : '<strong>Texto sem alterações.</strong> Mudaram apenas os dados do documento:'
     }</p>
     ${meta.length ? `<p>${meta.join('<br>')}</p>` : ''}
-    <p class="review-legend"><ins>texto adicionado</ins> <del>texto removido</del>
+    <p class="review-legend"><ins class="diff">texto adicionado</ins> <del class="diff">texto removido</del>
     <button type="button" class="review-toggle" data-toggle-diff>Ocultar alterações</button></p>
   </div>`;
 }
@@ -291,6 +314,7 @@ function docPage(doc, group, product, current = null) {
     { label: product.title, url: product.url },
   ];
   if (current) crumbs.push({ label: current.title, url: current.url });
+  crumbs.push({ label: current ? `Versão ${doc.version || doc.slug}` : doc.title, url: doc.url });
 
   const banner = current
     ? `<div class="notice" role="note">Esta é uma <strong>versão anterior</strong> e não está mais vigente. <a href="${current.url}">Ver versão vigente</a>.</div>`

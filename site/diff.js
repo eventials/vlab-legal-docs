@@ -41,6 +41,9 @@ function wrap(text, open, close, atLineStart) {
     .join('\n');
 }
 
+// Destinos de links/imagens: se mudarem, o bloco é trocado inteiro (marcas dentro de uma URL a quebrariam).
+const linkTargets = (md) => [...md.matchAll(/\]\(([^)]*)\)|<(https?:[^>]*|mailto:[^>]*)>/g)].map((m) => m[1] ?? m[2]).join('\n');
+
 function similarity(a, b) {
   let common = 0;
   for (const p of diffWordsWithSpace(a, b)) if (!p.added && !p.removed) common += p.value.length;
@@ -100,7 +103,14 @@ export function diffTokens(oldTokens, newTokens, lex, renderOld) {
     for (let k = 0; k < Math.max(rem.length, add.length); k++) {
       const r = rem[k];
       const a = add[k];
-      if (r && a && r.type === a.type && WORD_DIFFABLE.has(a.type) && similarity(key(r), key(a)) >= MIN_SIMILARITY) {
+      if (
+        r &&
+        a &&
+        r.type === a.type &&
+        WORD_DIFFABLE.has(a.type) &&
+        linkTargets(key(r)) === linkTargets(key(a)) &&
+        similarity(key(r), key(a)) >= MIN_SIMILARITY
+      ) {
         flushRuns();
         anchor();
         out.push(...blocks(lex(markupBlock(key(r), key(a)))));
@@ -139,19 +149,19 @@ export function applyMarkers(input) {
   for (const seg of input.split(/(<[^>]*>)/)) {
     if (seg.startsWith('<')) {
       const tag = seg.replace(SENTINELS, '');
-      out += state ? `</${state}>${tag}<${state}>` : tag;
+      out += state ? `</${state}>${tag}<${state} class="diff">` : tag;
       continue;
     }
     for (const ch of seg) {
       if (ch === INS_OPEN || ch === DEL_OPEN) {
         if (state) out += `</${state}>`;
         state = ch === INS_OPEN ? 'ins' : 'del';
-        out += `<${state}>`;
+        out += `<${state} class="diff">`;
       } else if (ch === INS_CLOSE || ch === DEL_CLOSE) {
         if (state) out += `</${state}>`;
         state = null;
       } else out += ch;
     }
   }
-  return out.replace(/<(ins|del)>(\s*)<\/\1>/g, '$2');
+  return out.replace(/<(ins|del) class="diff">(\s*)<\/\1>/g, '$2');
 }

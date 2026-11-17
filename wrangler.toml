@@ -5,14 +5,15 @@ compatibility_date = "2026-11-01"
 workers_dev = true
 preview_urls = true
 
-[assets]
-directory = "./dist"
-html_handling = "auto-trailing-slash"
-not_found_handling = "404-page"
-
 # Publicação no domínio institucional: o próprio Worker responde em /legal/*,
 # o restante do domínio continua no Webflow.
+# (Precisa ficar antes de [assets]; depois dele, viraria assets.routes.)
 routes = [
   { pattern = "www.vlabhealth.com/legal", zone_name = "vlabhealth.com" },
   { pattern = "www.vlabhealth.com/legal/*", zone_name = "vlabhealth.com" },
 ]
+
+[assets]
+directory = "./dist"
+html_handling = "auto-trailing-slash"
+not_found_handling = "404-page"

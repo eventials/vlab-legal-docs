@@ -151,8 +151,8 @@ h1 { font-size: clamp(1.75rem, 4vw, 2.4rem); line-height: 1.2; margin: 0 0 0.75r
 .badge-new { background: var(--ins-bg); color: var(--ins-text); }
 .badge-changed { background: var(--review-bg); color: var(--accent); border: 1px solid var(--review-border); }
 
-ins { background: var(--ins-bg); color: var(--ins-text); text-decoration: none; border-radius: 2px; }
-del { background: var(--del-bg); color: var(--del-text); text-decoration: line-through; border-radius: 2px; }
+ins.diff { background: var(--ins-bg); color: var(--ins-text); text-decoration: none; border-radius: 2px; }
+del.diff { background: var(--del-bg); color: var(--del-text); text-decoration: line-through; border-radius: 2px; }
 .diff-block { border-left: 3px solid; padding: 0.25rem 0 0.25rem 0.9rem; margin: 0 0 1rem -1rem; }
 .diff-block > :first-child { margin-top: 0; }
 .diff-block > :last-child { margin-bottom: 0; }
@@ -160,6 +160,6 @@ del { background: var(--del-bg); color: var(--del-text); text-decoration: line-t
 .diff-del { border-color: var(--del-border); background: var(--del-bg); color: var(--del-text); text-decoration: line-through; }
 .diff-anchor { display: block; scroll-margin-top: 4rem; }
 
-body.hide-diff del, body.hide-diff .diff-del, body.hide-diff .review-legend ins { display: none; }
-body.hide-diff ins { background: none; color: inherit; }
+body.hide-diff del.diff, body.hide-diff .diff-del, body.hide-diff .review-legend ins.diff { display: none; }
+body.hide-diff ins.diff { background: none; color: inherit; }
 body.hide-diff .diff-ins { background: none; border-color: transparent; }

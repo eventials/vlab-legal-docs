@@ -30,8 +30,9 @@ jobs:
       - run: npm ci
       - run: npm run build
         env:
-          # Em PRs, gera a prévia com as alterações destacadas em relação à branch base.
-          DIFF_BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || '' }}
+          # Em PRs, gera a prévia com as alterações destacadas em relação ao que está
+          # publicado (master), independentemente da branch de destino do PR.
+          DIFF_BASE: ${{ github.event_name == 'pull_request' && 'origin/master' || '' }}
 
       # master -> produção
       - name: Deploy (produção)
@@ -45,7 +46,7 @@ jobs:
       # PR -> URL de preview para revisão do jurídico, sem afetar produção
       - name: Preview (PR)
         id: preview
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -54,7 +55,7 @@ jobs:
 
       # Mantém um único comentário no PR com o link (atualizado a cada push).
       - name: Comentar link de preview no PR
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
         env:
           GH_TOKEN: ${{ github.token }}
           OUTPUT: ${{ steps.preview.outputs.command-output }}

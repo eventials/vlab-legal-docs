@@ -102,7 +102,15 @@ O link de preview é comentado automaticamente no pull request. Nele, as
 alterações em relação à versão publicada aparecem destacadas (texto
 adicionado em verde, removido em vermelho), com navegação entre as
 alterações e um botão para ver o texto final sem marcações. Para gerar
-essa prévia localmente: `DIFF_BASE=origin/master npm run serve`.
+essa prévia localmente, atualize antes a referência da `master`:
+
+```bash
+git fetch origin
+DIFF_BASE=origin/master npm run serve
+```
+
+PRs abertos a partir de forks não geram preview (não têm acesso às
+credenciais da Cloudflare).
 
 Observações:
 
