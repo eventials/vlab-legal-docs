@@ -26,7 +26,7 @@ import { join, resolve, dirname, basename, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { Marked } from 'marked';
+import { Marked, Lexer } from 'marked';
 import { layout, escapeHtml, formatDate } from './template.js';
 import { diffTokens, applyMarkers, cleanMarkers } from './diff.js';
 
@@ -39,6 +39,15 @@ const OUT = join(DIST, BASE_SEG);
 const SITE_URL = process.env.SITE_URL || '/';
 const DIFF_BASE = process.env.DIFF_BASE || '';
 const PREVIEW = Boolean(DIFF_BASE);
+
+if (PREVIEW) {
+  try {
+    execFileSync('git', ['rev-parse', '--verify', '--quiet', `${DIFF_BASE}^{commit}`], { cwd: SRC, stdio: 'ignore' });
+  } catch {
+    console.error(`✘ DIFF_BASE "${DIFF_BASE}" não existe neste repositório (rode "git fetch origin").`);
+    process.exit(1);
+  }
+}
 
 const IGNORED_DIRS = new Set(['node_modules', 'dist', 'site', 'worker', 'archive']);
 
@@ -163,18 +172,17 @@ function renderMarkdown(src, baseSrc = null) {
     const baseH1 = takeTitle(baseTokens);
     const oldTitle = base.data.title ?? (baseH1 ? stripTags(marked.parseInline(baseH1)) : null);
     const plain = new Marked({ gfm: true });
-    // Blocos reprocessados isoladamente precisam das definições de links de referência ([x]: url).
-    const defs = (links) =>
-      Object.entries(links || {})
-        .map(([k, v]) => `\n\n[${k}]: <${v.href}>${v.title ? ` "${v.title}"` : ''}`)
-        .join('');
-    const newDefs = defs(tokens.links);
-    const oldDefs = defs(baseTokens.links);
+    // Blocos reprocessados isoladamente precisam dos links de referência ([x]: url) do seu lado.
+    const lexWith = (links) => (md) => {
+      const lexer = new Lexer({ gfm: true });
+      Object.assign(lexer.tokens.links, links);
+      return lexer.lex(md);
+    };
     const result = diffTokens(
       baseTokens,
       tokens,
-      (md) => marked.lexer(md + newDefs),
-      (md) => plain.parse(md + oldDefs)
+      lexWith(tokens.links),
+      (md) => plain.parser(lexWith(baseTokens.links)(md))
     );
     tokens = result.tokens;
     diff = { changes: result.changes, oldData: base.data, oldTitle };

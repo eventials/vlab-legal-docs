@@ -41,8 +41,20 @@ function wrap(text, open, close, atLineStart) {
     .join('\n');
 }
 
-// Destinos de links/imagens: se mudarem, o bloco é trocado inteiro (marcas dentro de uma URL a quebrariam).
-const linkTargets = (md) => [...md.matchAll(/\]\(([^)]*)\)|<(https?:[^>]*|mailto:[^>]*)>/g)].map((m) => m[1] ?? m[2]).join('\n');
+/** Destinos resolvidos (já com links de referência) de todos os links/imagens de um token. */
+function hrefs(token) {
+  const out = [];
+  const walk = (t) => {
+    if (!t || typeof t !== 'object') return;
+    if ((t.type === 'link' || t.type === 'image') && t.href) out.push(t.href);
+    for (const k of ['tokens', 'items', 'header', 'rows']) {
+      const v = t[k];
+      if (Array.isArray(v)) v.flat().forEach(walk);
+    }
+  };
+  walk(token);
+  return out.join('\n');
+}
 
 function similarity(a, b) {
   let common = 0;
@@ -66,13 +78,15 @@ const blocks = (tokens) => tokens.filter((t) => t.type !== 'space');
 
 /**
  * Mescla os tokens antigo e novo num único fluxo de tokens marcado.
- * @param lex       markdown -> tokens (mesmo lexer usado no documento)
- * @param renderOld markdown -> HTML, para blocos removidos (fora do sumário)
+ * @param lex       markdown -> tokens (mesmo lexer/links de referência do documento novo)
+ * @param renderOld markdown -> HTML, para blocos removidos (com os links de referência antigos)
  */
 export function diffTokens(oldTokens, newTokens, lex, renderOld) {
   const oldB = blocks(oldTokens);
   const newB = blocks(newTokens);
-  const key = (t) => t.raw.trim();
+  const src = (t) => t.raw.trim();
+  // A chave inclui os destinos resolvidos: mudar só a definição de um link de referência também conta.
+  const key = (t) => `${src(t)}\u0000${hrefs(t)}`;
   const out = [];
   let changes = 0;
   let oi = 0;
@@ -108,12 +122,13 @@ export function diffTokens(oldTokens, newTokens, lex, renderOld) {
         a &&
         r.type === a.type &&
         WORD_DIFFABLE.has(a.type) &&
-        linkTargets(key(r)) === linkTargets(key(a)) &&
-        similarity(key(r), key(a)) >= MIN_SIMILARITY
+        // se um destino de link muda, o bloco é trocado inteiro (marcas dentro de uma URL a quebrariam)
+        hrefs(r) === hrefs(a) &&
+        similarity(src(r), src(a)) >= MIN_SIMILARITY
       ) {
         flushRuns();
         anchor();
-        out.push(...blocks(lex(markupBlock(key(r), key(a)))));
+        out.push(...blocks(lex(markupBlock(src(r), src(a)))));
         continue;
       }
       if (r) delRun.push(r);
